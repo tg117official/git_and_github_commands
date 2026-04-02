@@ -1,0 +1,372 @@
+# =========================================================
+# GIT REMOTE PRACTICE LAB USING REAL GITHUB (HTTPS)
+# =========================================================
+
+# ---------------------------------------------------------
+# STEP 0: Create a clean parent folder
+# ---------------------------------------------------------
+mkdir git-remote-lab
+cd git-remote-lab
+
+# ---------------------------------------------------------
+# STEP 1: Clone GitHub repo into alice folder
+# COMMAND 1: git clone
+# ---------------------------------------------------------
+git clone https://github.com/YOUR-USERNAME/git-remote-practice.git alice
+
+cd alice
+
+# Observation commands
+git status
+git remote
+git remote -v
+git remote show origin
+git branch
+git branch -a
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 2: Create first file and first commit from alice
+# ---------------------------------------------------------
+echo "# Git Remote Practice" > README.md
+echo "This repository is for practicing Git remote commands." >> README.md
+
+git status
+git add README.md
+git status
+git commit -m "Initial commit from alice"
+
+# Observation commands
+git status
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 3: Rename branch to main if needed
+# ---------------------------------------------------------
+git branch -M main
+
+# Observation commands
+git branch
+git branch -vv
+
+# ---------------------------------------------------------
+# STEP 4: Push main branch to GitHub
+# COMMAND 2: git push -u origin main
+# ---------------------------------------------------------
+git push -u origin main
+
+# Observation commands
+git status
+git branch -a
+git branch -r
+git branch -vv
+git log --oneline --graph --decorate --all
+git remote -v
+
+# ---------------------------------------------------------
+# STEP 5: Go back and create second clone: bob
+# This simulates another developer
+# ---------------------------------------------------------
+cd ..
+
+git clone https://github.com/YOUR-USERNAME/git-remote-practice.git bob
+
+cd bob
+
+# Observation commands
+git status
+git remote -v
+git branch
+git branch -a
+git branch -r
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 6: Bob updates README and pushes
+# COMMAND 3: git push
+# ---------------------------------------------------------
+echo "This line was added by Bob." >> README.md
+
+git status
+git add README.md
+git commit -m "Bob updated README"
+git push
+
+# Observation commands
+git status
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 7: Alice checks remote updates safely
+# COMMAND 4: git fetch
+# ---------------------------------------------------------
+cd ../alice
+
+git status
+git log --oneline --graph --decorate --all
+
+git fetch
+
+# After fetch, origin/main moves forward,
+# but local main does not merge automatically
+
+# Observation commands
+git status
+git branch -a
+git branch -r
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 8: Alice brings fetched changes into local branch
+# COMMAND 5: git pull
+# ---------------------------------------------------------
+git pull
+
+# Observation commands
+git status
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 9: Alice creates a feature branch
+# COMMAND 6: git switch -c feature-notes
+# ---------------------------------------------------------
+git switch -c feature-notes
+
+echo "Feature work started by Alice" > notes.txt
+
+git status
+git add notes.txt
+git commit -m "Add notes file from alice feature branch"
+
+# Observation commands
+git status
+git branch
+git branch -a
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 10: Push feature branch to GitHub
+# COMMAND 7: git push -u origin feature-notes
+# ---------------------------------------------------------
+git push -u origin feature-notes
+
+# Observation commands
+git status
+git branch -a
+git branch -r
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 11: Bob fetches new remote branch
+# COMMAND 8: git fetch
+# ---------------------------------------------------------
+cd ../bob
+
+git fetch
+
+# Observation commands
+git status
+git branch -a
+git branch -r
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 12: Bob creates local branch tracking remote branch
+# COMMAND 9:
+# git switch -c feature-notes --track origin/feature-notes
+# ---------------------------------------------------------
+git switch -c feature-notes --track origin/feature-notes
+
+# Observation commands
+git status
+git branch -vv
+
+# ---------------------------------------------------------
+# STEP 13: Bob adds more work on feature branch and pushes
+# COMMAND 10: git push
+# ---------------------------------------------------------
+echo "More feature work added by Bob" >> notes.txt
+
+git status
+git add notes.txt
+git commit -m "Bob updated feature notes"
+git push
+
+# Observation commands
+git status
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 14: Alice fetches remote changes on feature branch
+# COMMAND 11: git fetch origin
+# COMMAND 12: git fetch origin main
+# ---------------------------------------------------------
+cd ../alice
+
+git fetch origin
+git fetch origin main
+
+# Observation commands
+git status
+git branch -a
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 15: Alice switches to feature branch and pulls
+# COMMAND 13: git pull
+# ---------------------------------------------------------
+git switch feature-notes
+git pull
+
+# Observation commands
+git status
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 16: Manually set upstream just for practice
+# COMMAND 14:
+# git branch --set-upstream-to=origin/feature-notes feature-notes
+# ---------------------------------------------------------
+git branch --set-upstream-to=origin/feature-notes feature-notes
+
+# Observation commands
+git branch -vv
+
+# ---------------------------------------------------------
+# STEP 17: Merge feature branch into main from alice
+# ---------------------------------------------------------
+git switch main
+git pull
+
+git merge feature-notes
+
+# Observation commands
+git status
+git branch -a
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# Push merged main branch
+git push
+
+# ---------------------------------------------------------
+# STEP 18: Delete remote feature branch after merge
+# COMMAND 15: git push origin --delete feature-notes
+# ---------------------------------------------------------
+git push origin --delete feature-notes
+
+# Observation commands
+git branch -a
+git branch -r
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 19: Bob cleans stale remote-tracking references
+# COMMAND 16: git fetch --prune
+# COMMAND 17: git remote prune origin
+# ---------------------------------------------------------
+cd ../bob
+
+git fetch --prune
+
+# Observation commands
+git branch -a
+git branch -r
+git branch -vv
+
+git remote prune origin
+
+# Observation commands
+git branch -a
+git branch -r
+
+# ---------------------------------------------------------
+# STEP 20: Practice pull --rebase
+# COMMAND 18: git pull --rebase
+# ---------------------------------------------------------
+git switch main
+git pull
+
+# Make a local commit in bob
+echo "Bob local experiment line" >> README.md
+git status
+git add README.md
+git commit -m "Bob local change on main"
+
+# Now alice makes another commit and pushes
+cd ../alice
+git switch main
+
+echo "Alice added another line on main" >> README.md
+git status
+git add README.md
+git commit -m "Alice updated main again"
+git push
+
+# Bob rebases his local work on top of latest remote main
+cd ../bob
+git switch main
+git pull --rebase
+
+# Observation commands
+git status
+git branch -vv
+git log --oneline --graph --decorate --all
+
+# ---------------------------------------------------------
+# STEP 21: Practice changing remote URL
+# COMMAND 19: git remote set-url origin <url>
+# For demo, we set the same URL again
+# ---------------------------------------------------------
+git remote -v
+git remote set-url origin https://github.com/YOUR-USERNAME/git-remote-practice.git
+git remote -v
+
+# ---------------------------------------------------------
+# STEP 22: Practice adding second remote
+# COMMAND 20: git remote add upstream <url>
+# ---------------------------------------------------------
+git remote add upstream https://github.com/YOUR-USERNAME/git-remote-practice.git
+git remote -v
+
+# Fetch from upstream
+git fetch upstream
+
+# Observation commands
+git branch -a
+git branch -r
+
+# ---------------------------------------------------------
+# STEP 23: Practice renaming remote
+# EXTRA COMMAND: git remote rename upstream source
+# ---------------------------------------------------------
+git remote rename upstream source
+git remote -v
+
+# ---------------------------------------------------------
+# STEP 24: Practice removing remote
+# EXTRA COMMAND: git remote remove source
+# ---------------------------------------------------------
+git remote remove source
+git remote -v
+
+# ---------------------------------------------------------
+# FINAL OBSERVATION COMMANDS
+# ---------------------------------------------------------
+git status
+git branch
+git branch -a
+git branch -r
+git branch -vv
+git remote -v
+git remote show origin
+git log --oneline --graph --decorate --all
