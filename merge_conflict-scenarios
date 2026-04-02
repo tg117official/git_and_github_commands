@@ -1,0 +1,408 @@
+# =========================================================
+# GIT MERGE CONFLICT LAB - 5 UNIQUE SCENARIOS
+# =========================================================
+# This script is designed for practice and teaching.
+# Each exercise demonstrates a different type of merge conflict.
+#
+# Useful observation commands included:
+# - git status
+# - git log --oneline --graph --decorate --all
+# - git diff
+# - git diff --staged
+# - cat <file>
+# - ls
+#
+# NOTE:
+# Run one exercise at a time.
+# If a merge conflict occurs and you want to stop the merge:
+# git merge --abort
+# =========================================================
+
+
+
+# =========================================================
+# EXERCISE 1: SAME LINE MODIFIED DIFFERENTLY
+# =========================================================
+# Scenario:
+# Two developers modify the exact same line differently.
+#
+# Purpose:
+# This is the most basic and classic merge conflict.
+
+mkdir git-conflict-lab-1
+cd git-conflict-lab-1
+git init -b main
+
+echo "source_path=/bronze/orders" > config.txt
+git add config.txt
+git commit -m "Initial config file"
+
+# Validate initial state
+git status
+git log --oneline --graph --decorate --all
+cat config.txt
+
+# Branch A changes same line
+git switch -c feature-a
+echo "source_path=/bronze/orders_v2" > config.txt
+git status
+git diff
+cat config.txt
+git add config.txt
+git diff --staged
+git commit -m "Feature A updated source path"
+
+# Validate branch A
+git log --oneline --graph --decorate --all
+
+# Branch B changes same line differently
+git switch main
+git switch -c feature-b
+echo "source_path=/bronze/orders_final" > config.txt
+git status
+git diff
+cat config.txt
+git add config.txt
+git commit -m "Feature B updated source path"
+
+# Validate branch B
+git log --oneline --graph --decorate --all
+
+# Merge sequence
+git switch main
+git merge feature-a
+git status
+git log --oneline --graph --decorate --all
+cat config.txt
+
+git merge feature-b
+
+# Conflict observation
+git status
+git diff
+cat config.txt
+
+# Optional:
+# git merge --abort
+
+cd ..
+
+
+
+# =========================================================
+# EXERCISE 2: DELETE VS MODIFY
+# =========================================================
+# Scenario:
+# One branch deletes a line, another branch modifies that same line.
+#
+# Purpose:
+# This is a very common real-world conflict.
+
+mkdir git-conflict-lab-2
+cd git-conflict-lab-2
+git init -b main
+
+echo "file_format=csv" > settings.txt
+echo "delimiter=," >> settings.txt
+git add settings.txt
+git commit -m "Initial settings file"
+
+# Validate initial state
+git status
+git log --oneline --graph --decorate --all
+cat settings.txt
+
+# Branch A deletes the delimiter line
+git switch -c feature-remove-delimiter
+printf "file_format=csv\n" > settings.txt
+git status
+git diff
+cat settings.txt
+git add settings.txt
+git diff --staged
+git commit -m "Removed delimiter setting"
+
+# Branch B updates the delimiter line
+git switch main
+git switch -c feature-update-delimiter
+printf "file_format=csv\ndelimiter=|\n" > settings.txt
+git status
+git diff
+cat settings.txt
+git add settings.txt
+git commit -m "Updated delimiter setting"
+
+# Validate branches
+git log --oneline --graph --decorate --all
+
+# Merge sequence
+git switch main
+git merge feature-remove-delimiter
+git status
+cat settings.txt
+git log --oneline --graph --decorate --all
+
+git merge feature-update-delimiter
+
+# Conflict observation
+git status
+git diff
+cat settings.txt
+
+# Optional:
+# git merge --abort
+
+cd ..
+
+
+
+# =========================================================
+# EXERCISE 3: ADJACENT EDITS IN THE SAME BLOCK
+# =========================================================
+# Scenario:
+# Two developers edit nearby lines in the same code block.
+#
+# Purpose:
+# To show that conflicts can happen at region/block level,
+# not only when the exact same line is changed.
+
+mkdir git-conflict-lab-3
+cd git-conflict-lab-3
+git init -b main
+
+printf "print('Start ETL job')\nprint('Validate input')\nprint('End ETL job')\n" > etl.py
+git add etl.py
+git commit -m "Initial ETL script"
+
+# Validate initial state
+git status
+git log --oneline --graph --decorate --all
+cat etl.py
+
+# Branch A edits middle section one way
+git switch -c feature-read
+printf "print('Start ETL job')\nprint('Read orders data')\nprint('End ETL job')\n" > etl.py
+git status
+git diff
+cat etl.py
+git add etl.py
+git commit -m "Added read step"
+
+# Branch B edits same block differently
+git switch main
+git switch -c feature-write
+printf "print('Start ETL job')\nprint('Write silver data')\nprint('End ETL job')\n" > etl.py
+git status
+git diff
+cat etl.py
+git add etl.py
+git commit -m "Added write step"
+
+# Validate branches
+git log --oneline --graph --decorate --all
+
+# Merge sequence
+git switch main
+git merge feature-read
+git status
+cat etl.py
+git log --oneline --graph --decorate --all
+
+git merge feature-write
+
+# Conflict observation
+git status
+git diff
+cat etl.py
+
+# Optional:
+# git merge --abort
+
+cd ..
+
+
+
+# =========================================================
+# EXERCISE 4: RENAME VS MODIFY
+# =========================================================
+# Scenario:
+# One branch renames a file, another branch modifies the original file.
+#
+# Purpose:
+# To show that conflicts are not only about content changes.
+# File movement can also complicate merges.
+
+mkdir git-conflict-lab-4
+cd git-conflict-lab-4
+git init -b main
+
+echo "SELECT order_id, customer_id FROM orders;" > transform.sql
+git add transform.sql
+git commit -m "Initial SQL transform"
+
+# Validate initial state
+git status
+git log --oneline --graph --decorate --all
+ls
+cat transform.sql
+
+# Branch A renames file
+git switch -c feature-rename
+git mv transform.sql silver_transform.sql
+git status
+ls
+git diff --staged
+git commit -m "Renamed transform.sql to silver_transform.sql"
+
+# Branch B modifies original file
+git switch main
+git switch -c feature-modify
+echo "SELECT order_id, customer_id, order_date FROM orders;" > transform.sql
+git status
+git diff
+cat transform.sql
+git add transform.sql
+git commit -m "Updated original transform.sql"
+
+# Validate branches
+git log --oneline --graph --decorate --all
+
+# Merge sequence
+git switch main
+git merge feature-rename
+git status
+ls
+git log --oneline --graph --decorate --all
+
+git merge feature-modify
+
+# Conflict observation
+git status
+git diff
+ls
+
+# Check both files if present
+cat silver_transform.sql
+# cat transform.sql
+
+# Optional:
+# git merge --abort
+
+cd ..
+
+
+
+# =========================================================
+# EXERCISE 5: FULL CONFLICT RESOLUTION FLOW
+# =========================================================
+# Scenario:
+# Two branches update the same line differently.
+# After conflict occurs, we resolve it manually.
+#
+# Purpose:
+# To teach the complete resolution workflow.
+
+mkdir git-conflict-lab-5
+cd git-conflict-lab-5
+git init -b main
+
+echo "Owner=TeamA" > app.conf
+git add app.conf
+git commit -m "Initial app config"
+
+# Validate initial state
+git status
+git log --oneline --graph --decorate --all
+cat app.conf
+
+# Branch A changes the line
+git switch -c feature-owner-a
+echo "Owner=DataEngineeringTeam" > app.conf
+git status
+git diff
+cat app.conf
+git add app.conf
+git commit -m "Updated owner to DataEngineeringTeam"
+
+# Branch B changes the same line differently
+git switch main
+git switch -c feature-owner-b
+echo "Owner=AnalyticsPlatformTeam" > app.conf
+git status
+git diff
+cat app.conf
+git add app.conf
+git commit -m "Updated owner to AnalyticsPlatformTeam"
+
+# Validate branches
+git log --oneline --graph --decorate --all
+
+# Merge sequence
+git switch main
+git merge feature-owner-a
+git status
+cat app.conf
+git log --oneline --graph --decorate --all
+
+git merge feature-owner-b
+
+# Conflict observation
+git status
+git diff
+cat app.conf
+
+# ---------------------------------------------------------
+# MANUAL RESOLUTION
+# Choose the final content manually
+# ---------------------------------------------------------
+echo "Owner=DataEngineeringTeam_AnalyticsPlatformTeam" > app.conf
+
+# Validate manual resolution
+cat app.conf
+git diff
+
+# Stage resolved file
+git add app.conf
+git status
+git diff --staged
+
+# Complete merge
+git commit -m "Resolved merge conflict in app.conf"
+
+# Final validation
+git status
+git log --oneline --graph --decorate --all
+cat app.conf
+
+cd ..
+
+
+
+# =========================================================
+# WHAT TO EXPLAIN TO STUDENTS AFTER EACH CONFLICT
+# =========================================================
+# 1. Run:
+#    git status
+#
+# 2. Open the conflicted file:
+#    cat <file-name>
+#
+# 3. Show conflict markers:
+#
+#    <<<<<<< HEAD
+#    current branch content
+#    =======
+#    incoming branch content
+#    >>>>>>> feature-branch
+#
+# Meaning:
+# - top section    = current branch version
+# - bottom section = incoming branch version
+#
+# 4. Edit file manually
+# 5. Stage resolved file using git add
+# 6. Commit the merge resolution
+#
+# Optional recovery command:
+# git merge --abort
+# =========================================================
