@@ -363,8 +363,7 @@ git log --oneline --graph --decorate --all
 # ---------------------------------------------------------
 cd ../alice
 
-git fetch origin
-git fetch origin main
+git fetch origin # Fetched all branches from remote
 
 # Observation commands
 git status
@@ -469,6 +468,12 @@ git push
 cd ../bob
 git switch main
 git pull --rebase
+
+# resolve merge conflict in Readme.md
+git add README.md
+git commit -m "Bob updated README.md again"
+
+git rebase --continue
 
 # Observation commands
 git status
