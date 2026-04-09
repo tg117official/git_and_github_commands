@@ -1,1 +1,475 @@
+# =====================================================================
+# MERGE vs REBASE vs SQUASH-MERGE (REMOTE) DEMO SCRIPT
+# =====================================================================
+#
+# PURPOSE
+# Demonstrate the difference between:
+# 1. Normal merge
+# 2. Rebase
+# 3. Squash merge on GitHub remote
+#
+# MAIN GOAL
+# Help students understand how branch history changes in each case.
+#
+# IMPORTANT
+# - This script is meant for LEARNING and DEMONSTRATION
+# - We will keep separate branches for each case
+# - For squash merge, GitHub UI will be used because squash merge on remote
+#   is typically performed from Pull Request screen
+#
+# ASSUMPTIONS
+# - Git is installed
+# - You have a GitHub account
+# - You will create one EMPTY GitHub repo manually
+#
+# SUGGESTED REMOTE REPO NAME
+# merge-rebase-squash-demo
+#
+# BEST WAY TO TEACH THIS
+# After every major step, run:
+#   git log --oneline --graph --all --decorate
+#
+# This will visually show the difference in history.
+# =====================================================================
 
+
+
+# =====================================================================
+# SECTION 1: SETUP
+# =====================================================================
+mkdir merge-rebase-squash-demo
+cd merge-rebase-squash-demo
+
+git init -b main
+
+echo "# Merge Rebase Squash Demo" > README.md
+echo "Base project content" >> README.md
+
+git add README.md
+git commit -m "Initial commit on main"
+
+# Create empty GitHub repo manually, then connect remote
+git remote add origin https://github.com/YOUR-USERNAME/merge-rebase-squash-demo.git
+git push -u origin main
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+
+
+# =====================================================================
+# SECTION 2: CREATE BASELINE COMMITS ON MAIN
+# =====================================================================
+# We add one more commit on main so students can see a little history.
+
+echo "" >> README.md
+echo "Project created for history comparison demo." >> README.md
+
+git add README.md
+git commit -m "Add project description on main"
+git push
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# NOTE:
+# At this point main has a simple straight history.
+
+
+
+# =====================================================================
+# SECTION 3: DEMO A - NORMAL MERGE
+# =====================================================================
+#
+# IDEA
+# We will:
+# 1. create feature branch
+# 2. make 2 commits
+# 3. move main ahead separately
+# 4. merge feature branch into main
+#
+# RESULT
+# We expect a merge commit or at least branch history joining visibly.
+# =====================================================================
+
+git switch -c feature-merge-demo
+
+echo "" >> README.md
+echo "## Merge Demo Feature" >> README.md
+git add README.md
+git commit -m "Add merge demo heading"
+
+echo "This feature branch is used to demonstrate normal merge." >> README.md
+git add README.md
+git commit -m "Add merge demo details"
+
+# Push feature branch
+git push -u origin feature-merge-demo
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# Now simulate that main moved ahead separately
+git switch main
+
+echo "" >> README.md
+echo "Main branch changed while feature-merge-demo was in progress." >> README.md
+git add README.md
+git commit -m "Add independent main change before merge"
+git push
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# Now merge feature branch into main
+git merge feature-merge-demo
+
+# Push merged main
+git push
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# IMPORTANT NOTE:
+# In many cases, because main moved ahead and feature also moved ahead,
+# Git creates a merge commit automatically.
+#
+# WHAT TO OBSERVE:
+# - Both branch histories are preserved
+# - A merge node may appear
+# - History is not strictly linear
+#
+# TEACHING LINE:
+# Merge keeps the original branch structure visible.
+
+
+
+# =====================================================================
+# SECTION 4: CLEANUP AFTER MERGE DEMO
+# =====================================================================
+git branch -d feature-merge-demo
+git push origin --delete feature-merge-demo
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+
+
+# =====================================================================
+# SECTION 5: DEMO B - REBASE
+# =====================================================================
+#
+# IDEA
+# We will:
+# 1. create new feature branch
+# 2. make commits there
+# 3. move main ahead separately
+# 4. rebase feature branch on latest main
+# 5. merge rebased branch
+#
+# RESULT
+# History should look more linear.
+# =====================================================================
+
+git switch main
+git switch -c feature-rebase-demo
+
+echo "" >> README.md
+echo "## Rebase Demo Feature" >> README.md
+git add README.md
+git commit -m "Add rebase demo heading"
+
+echo "This feature branch is used to demonstrate rebase." >> README.md
+git add README.md
+git commit -m "Add rebase demo details"
+
+git push -u origin feature-rebase-demo
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# Now main moves ahead independently
+git switch main
+
+echo "" >> README.md
+echo "Main branch changed while feature-rebase-demo was in progress." >> README.md
+git add README.md
+git commit -m "Add independent main change before rebase"
+git push
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# Now go back to feature branch and rebase it on latest main
+git switch feature-rebase-demo
+git rebase main
+
+# If conflict happens:
+# 1. fix file manually
+# 2. git add README.md
+# 3. git rebase --continue
+#
+# If you want to cancel:
+# git rebase --abort
+
+# After successful rebase, push rewritten branch
+git push --force-with-lease
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# Now merge rebased branch into main
+git switch main
+git merge feature-rebase-demo
+git push
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# IMPORTANT NOTE:
+# After rebase, branch commits are replayed on top of latest main.
+#
+# WHAT TO OBSERVE:
+# - History looks more linear
+# - Rebase rewrites commit IDs
+# - Often there is no separate merge node feel like normal merge history
+#
+# TEACHING LINE:
+# Rebase changes the path of history so your work looks like it started
+# from the latest main.
+
+
+
+# =====================================================================
+# SECTION 6: CLEANUP AFTER REBASE DEMO
+# =====================================================================
+git branch -d feature-rebase-demo
+git push origin --delete feature-rebase-demo
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+
+
+# =====================================================================
+# SECTION 7: DEMO C - SQUASH MERGE ON REMOTE
+# =====================================================================
+#
+# IDEA
+# We will:
+# 1. create a feature branch
+# 2. make MANY small commits
+# 3. push branch
+# 4. open Pull Request on GitHub
+# 5. choose "Squash and merge"
+#
+# RESULT
+# main will get ONE clean commit, even though branch had multiple commits
+#
+# IMPORTANT
+# This is specifically remote squash merge demonstration.
+# =====================================================================
+
+git switch main
+git switch -c feature-squash-demo
+
+echo "" >> README.md
+echo "## Squash Demo Feature" >> README.md
+git add README.md
+git commit -m "Add squash demo heading"
+
+echo "Line 1 for squash demo" >> README.md
+git add README.md
+git commit -m "Add squash demo line 1"
+
+echo "Line 2 for squash demo" >> README.md
+git add README.md
+git commit -m "Add squash demo line 2"
+
+echo "Line 3 for squash demo" >> README.md
+git add README.md
+git commit -m "Add squash demo line 3"
+
+git push -u origin feature-squash-demo
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# ---------------------------------------------------------------------
+# GITHUB UI STEP FOR REMOTE SQUASH MERGE
+# ---------------------------------------------------------------------
+# 1. Open GitHub repo in browser
+# 2. Go to Pull Requests
+# 3. Click New Pull Request
+# 4. Set:
+#       base    = main
+#       compare = feature-squash-demo
+# 5. Create PR
+# 6. Click merge options dropdown
+# 7. Choose:
+#       Squash and merge
+# 8. Confirm merge
+#
+# WHAT HAPPENS:
+# - feature-squash-demo had multiple commits
+# - main receives ONE combined commit
+#
+# IMPORTANT TEACHING POINT:
+# Branch history on feature branch had many commits,
+# but main gets a single clean commit after squash merge.
+# ---------------------------------------------------------------------
+
+# After squash merge is done on GitHub:
+git switch main
+git pull origin main
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+# OPTIONAL CLEANUP
+git branch -d feature-squash-demo
+git push origin --delete feature-squash-demo
+
+# VIEW HISTORY
+git log --oneline --graph --all --decorate
+
+
+
+# =====================================================================
+# SECTION 8: WHAT TO OBSERVE IN EACH CASE
+# =====================================================================
+#
+# A. NORMAL MERGE
+# - branch structure remains visible
+# - often creates merge commit
+# - both histories are preserved as they happened
+#
+# B. REBASE
+# - feature commits are replayed on top of latest main
+# - history looks more linear
+# - commit IDs change
+# - may require push --force-with-lease
+#
+# C. SQUASH MERGE ON REMOTE
+# - feature branch may have many commits
+# - main gets only one final combined commit
+# - history on main looks cleaner
+#
+# VERY IMPORTANT:
+# Rebase and squash are NOT the same.
+#
+# REBASE:
+# changes base of commits
+#
+# SQUASH:
+# combines multiple commits into one
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 9: GOLDEN DEFINITIONS
+# =====================================================================
+#
+# MERGE
+# Combine branches and preserve branch history.
+#
+# REBASE
+# Replay commits on top of another branch to create a linear history.
+#
+# SQUASH MERGE
+# Combine all commits of a branch/PR into one single commit at merge time.
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 10: COMMON CLASSROOM EXPLANATION
+# =====================================================================
+#
+# Suppose feature branch has 3 commits:
+# - add login page
+# - fix typo
+# - fix color
+#
+# MERGE:
+# main gets those commits with branch history preserved
+#
+# REBASE:
+# those commits are replayed on top of latest main
+#
+# SQUASH MERGE:
+# main gets one clean commit like:
+# "Add login page feature"
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 11: PRACTICAL TEAM USAGE
+# =====================================================================
+#
+# USE NORMAL MERGE WHEN:
+# - team wants full branch history
+# - easy for beginners
+# - merge commit is acceptable
+#
+# USE REBASE WHEN:
+# - team prefers linear history
+# - developers understand rewritten history
+# - feature branch must be updated cleanly on latest main
+#
+# USE SQUASH MERGE WHEN:
+# - feature branch has many tiny commits
+# - team wants one commit per PR in main
+# - main history should look very clean
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 12: IMPORTANT WARNINGS
+# =====================================================================
+#
+# WARNING 1:
+# Rebase rewrites history, so commit IDs change.
+#
+# WARNING 2:
+# After rebase on a pushed branch, use:
+#   git push --force-with-lease
+#
+# WARNING 3:
+# Do not casually use plain --force in team projects.
+#
+# WARNING 4:
+# Squash merge on remote changes how commits appear in main,
+# but original feature branch may have had multiple commits before merge.
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 13: BEST COMMAND TO REPEAT THROUGHOUT DEMO
+# =====================================================================
+#
+# Run this again and again:
+# git log --oneline --graph --all --decorate
+#
+# This one command will make the difference visible to students.
+# =====================================================================
+
+
+
+# =====================================================================
+# FINAL TEACHING SUMMARY
+# =====================================================================
+#
+# NORMAL MERGE:
+# keeps branch shape
+#
+# REBASE:
+# makes history linear by replaying commits
+#
+# REMOTE SQUASH MERGE:
+# takes many feature commits and puts one clean commit into main
+# =====================================================================
