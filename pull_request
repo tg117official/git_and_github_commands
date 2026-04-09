@@ -1,0 +1,589 @@
+# =====================================================================
+# PULL REQUEST + REBASE + SQUASH DEMO SCRIPT
+# Beginner to intermediate level
+#
+# PURPOSE
+# 1. Demonstrate pull request workflow
+# 2. Demonstrate PR review/update flow
+# 3. Demonstrate merge conflicts in PR workflow
+# 4. Demonstrate rebase concept
+# 5. Demonstrate squash concept
+# 6. Demonstrate GitHub merge options:
+#    - Create a merge commit
+#    - Squash and merge
+#    - Rebase and merge
+#
+# ASSUMPTIONS
+# - Git is installed
+# - GitHub account exists
+# - You will create one empty GitHub repository manually
+#
+# SUGGESTED REPO NAME
+# pr-rebase-squash-demo
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 1: CORE IDEA NOTES
+# =====================================================================
+# PULL REQUEST:
+# "Please review my branch and merge it into another branch."
+#
+# REBASE:
+# Moves or replays commits on top of another base branch.
+#
+# SQUASH:
+# Combines multiple commits into one commit.
+#
+# VERY IMPORTANT:
+# - merge, rebase, squash are different concepts
+# - in GitHub PR, these ideas also appear as merge strategies
+#
+# You already know:
+# - commit
+# - branch
+# - merge
+# - conflict
+# - push
+#
+# This script extends your understanding on top of that.
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 2: CREATE PROJECT
+# =====================================================================
+mkdir pr-rebase-squash-demo
+cd pr-rebase-squash-demo
+
+git init -b main
+
+echo "# PR Rebase Squash Demo" > README.md
+echo "Initial project content" >> README.md
+
+git add README.md
+git commit -m "Initial commit"
+
+# Connect remote after creating empty repo on GitHub
+git remote add origin https://github.com/YOUR-USERNAME/pr-rebase-squash-demo.git
+git push -u origin main
+
+
+
+# =====================================================================
+# SECTION 3: BASIC PULL REQUEST DEMO
+# =====================================================================
+# We create a feature branch, commit changes, push, then open PR.
+# This is the normal workflow.
+
+git switch -c feature/navbar
+
+echo "" >> README.md
+echo "## Navbar Feature" >> README.md
+echo "Added navbar section" >> README.md
+
+git add README.md
+git commit -m "Add navbar heading"
+
+echo "Navbar contains Home, About, Contact" >> README.md
+git add README.md
+git commit -m "Add navbar links"
+
+git push -u origin feature/navbar
+
+# ---------------------------------------------------------------------
+# GITHUB UI STEP
+# ---------------------------------------------------------------------
+# Open GitHub repo in browser
+# Pull Requests -> New Pull Request
+#
+# base    : main
+# compare : feature/navbar
+#
+# PR title example:
+# Add navbar feature
+#
+# IMPORTANT:
+# PR is opened after pushing the branch.
+# PR is a review workflow, not a replacement for commit or merge.
+# ---------------------------------------------------------------------
+
+
+
+# =====================================================================
+# SECTION 4: PR SCENARIO - REVIEWER REQUESTS CHANGES
+# =====================================================================
+# Reviewer says:
+# "Please add Login link also"
+#
+# You DO NOT create a new PR.
+# You update the same branch and push again.
+# Existing PR updates automatically.
+
+echo "Navbar also contains Login link" >> README.md
+git add README.md
+git commit -m "Add login link to navbar"
+git push
+
+# IMPORTANT NOTE:
+# Same branch + new push = existing PR gets updated automatically
+
+
+
+# =====================================================================
+# SECTION 5: PR SCENARIO - REVIEW COMMENT / SMALL FIX
+# =====================================================================
+# Reviewer says:
+# "Improve heading wording"
+#
+# For classroom demo, edit file manually instead of sed.
+# Open README.md and change:
+# ## Navbar Feature
+# to:
+# ## Navigation Bar Feature
+
+# After manual edit:
+git add README.md
+git commit -m "Improve heading wording based on review"
+git push
+
+# Again, same PR updates automatically.
+
+
+
+# =====================================================================
+# SECTION 6: MERGE THE PULL REQUEST - MERGE COMMIT STYLE
+# =====================================================================
+# In GitHub PR page, after approval, click:
+# Merge pull request
+#
+# If GitHub merge style selected is:
+# "Create a merge commit"
+#
+# Then GitHub creates an extra merge commit while merging the branch.
+#
+# Result:
+# - original commits stay separate
+# - branch history is preserved
+#
+# This style is easiest for beginners to understand.
+#
+# After merging on GitHub:
+git switch main
+git pull origin main
+
+# Optional cleanup:
+git branch -d feature/navbar
+git push origin --delete feature/navbar
+
+
+
+# =====================================================================
+# SECTION 7: WHAT IS SQUASH?
+# =====================================================================
+# SQUASH means:
+# combine multiple commits into one single commit
+#
+# Example:
+# commit 1 = create heading
+# commit 2 = add links
+# commit 3 = add login
+# commit 4 = improve wording
+#
+# Squash can turn them into:
+# commit X = Add navbar feature
+#
+# WHY TEAMS USE SQUASH:
+# - cleaner main branch history
+# - feature may have many tiny messy commits
+# - final history becomes simple
+#
+# TWO IMPORTANT USE CASES:
+# 1. local squash before PR
+# 2. GitHub "Squash and merge" at merge time
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 8: DEMO FOR SQUASH CONCEPT
+# =====================================================================
+git switch main
+git switch -c feature/footer
+
+echo "" >> README.md
+echo "## Footer Feature" >> README.md
+git add README.md
+git commit -m "Add footer heading"
+
+echo "Footer contains support links" >> README.md
+git add README.md
+git commit -m "Add support links in footer"
+
+echo "Footer contains social media links" >> README.md
+git add README.md
+git commit -m "Add social links in footer"
+
+git log --oneline --graph
+
+# At this point branch has multiple small commits.
+# Suppose we want ONE clean commit instead.
+
+
+
+# =====================================================================
+# SECTION 9: LOCAL SQUASH USING INTERACTIVE REBASE
+# =====================================================================
+# This is one of the most common ways to squash locally.
+#
+# We want to squash the last 3 commits into 1.
+#
+# Command:
+# git rebase -i HEAD~3
+#
+# What happens:
+# Git opens an editor with something like:
+#
+# pick abc111 Add footer heading
+# pick def222 Add support links in footer
+# pick ghi333 Add social links in footer
+#
+# Change it to:
+#
+# pick abc111 Add footer heading
+# squash def222 Add support links in footer
+# squash ghi333 Add social links in footer
+#
+# Save and close editor.
+#
+# Then Git asks for final commit message.
+# Example:
+# Add footer feature
+#
+# After that, 3 commits become 1 commit.
+
+git rebase -i HEAD~3
+
+# AFTER REBASE, VERIFY:
+git log --oneline --graph
+
+# IMPORTANT:
+# Squashing rewrites history.
+# So commit IDs change.
+#
+# If branch was already pushed before squash, normal push may fail.
+# You may need:
+# git push --force-with-lease
+#
+# Safer than --force because it checks remote state.
+
+git push -u origin feature/footer
+
+# If feature/footer had already been pushed earlier before squash,
+# then use:
+# git push --force-with-lease
+
+# ---------------------------------------------------------------------
+# GITHUB UI STEP
+# Open PR:
+# feature/footer --> main
+# ---------------------------------------------------------------------
+
+
+
+# =====================================================================
+# SECTION 10: GITHUB "SQUASH AND MERGE" SCENARIO
+# =====================================================================
+# Suppose you DO NOT squash locally.
+# Your PR has 5 small commits.
+#
+# In GitHub, while merging PR, choose:
+# "Squash and merge"
+#
+# What happens:
+# - GitHub combines all PR commits into ONE commit
+# - main branch gets one clean commit
+# - feature branch may still have many original commits
+#
+# WHY IT IS POPULAR:
+# - easy for teams
+# - no need to manually squash locally
+# - keeps main clean
+#
+# DIFFERENCE FROM LOCAL SQUASH:
+# LOCAL SQUASH:
+# - branch history itself becomes clean before merge
+#
+# GITHUB SQUASH AND MERGE:
+# - branch may remain messy
+# - main gets only one clean final commit
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 11: WHAT IS REBASE?
+# =====================================================================
+# REBASE means:
+# take commits from one branch and replay them on top of another base.
+#
+# Beginner mental model:
+# "Move my branch so it looks like I started from the latest main"
+#
+# WHY REBASE IS USED:
+# - cleaner linear history
+# - update feature branch with latest main
+# - avoid extra merge commits in some workflows
+#
+# IMPORTANT:
+# merge and rebase both can integrate branch changes,
+# but they create different history shapes.
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 12: REBASE SCENARIO - MAIN MOVED AHEAD
+# =====================================================================
+# Very common real-life case:
+# You created feature branch yesterday.
+# Today main has new commits from other developers.
+# You want your feature branch to sit on top of latest main.
+#
+# Let's simulate it.
+
+git switch main
+echo "" >> README.md
+echo "## Hotfix in main" >> README.md
+git add README.md
+git commit -m "Add hotfix note in main"
+git push
+
+git switch feature/footer
+
+# At this point feature/footer is based on older main.
+# We now rebase feature/footer onto latest main:
+git rebase main
+
+# Meaning:
+# Replay feature/footer commits on top of current main.
+
+# VERIFY:
+git log --oneline --graph --all
+
+# IMPORTANT RESULT:
+# History becomes more linear compared to merge.
+#
+# If there is conflict during rebase:
+# 1. fix file manually
+# 2. git add <file>
+# 3. git rebase --continue
+#
+# If you want to stop:
+# git rebase --abort
+
+# Since rebase rewrites commit history, if branch was already pushed:
+# git push --force-with-lease
+git push --force-with-lease
+
+
+
+# =====================================================================
+# SECTION 13: REBASE CONFLICT SCENARIO
+# =====================================================================
+# During rebase, Git may stop and say conflict occurred.
+#
+# Then:
+# 1. open conflicted file
+# 2. remove conflict markers
+#    <<<<<<<
+#    =======
+#    >>>>>>>
+# 3. keep correct final content
+# 4. git add .
+# 5. git rebase --continue
+#
+# Example commands:
+#
+# git status
+# git add README.md
+# git rebase --continue
+#
+# If rebase becomes confusing:
+# git rebase --abort
+#
+# This restores branch to previous state before rebase started.
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 14: PR MERGE OPTION - REBASE AND MERGE
+# =====================================================================
+# In GitHub pull request, one merge option may be:
+# "Rebase and merge"
+#
+# What it means conceptually:
+# GitHub takes your PR commits and replays them on top of target branch
+# without creating a merge commit.
+#
+# Result:
+# - no merge commit
+# - history looks more linear
+#
+# USEFUL WHEN:
+# - team wants clean linear history
+#
+# DIFFERENCE FROM NORMAL MERGE COMMIT:
+#
+# Create a merge commit:
+# - branch history preserved with merge node
+#
+# Rebase and merge:
+# - no merge commit
+# - history appears linear
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 15: FULL COMPARISON - 3 GITHUB PR MERGE OPTIONS
+# =====================================================================
+# 1. CREATE A MERGE COMMIT
+#    - preserves branch history
+#    - adds merge commit
+#    - easiest to understand
+#
+# 2. SQUASH AND MERGE
+#    - combines all PR commits into one commit
+#    - very clean main branch
+#    - hides individual feature commits in main
+#
+# 3. REBASE AND MERGE
+#    - replays commits on top of target branch
+#    - no merge commit
+#    - history becomes linear
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 16: WHEN TO USE WHAT?
+# =====================================================================
+# USE MERGE COMMIT WHEN:
+# - beginners are learning
+# - team wants full branch history visible
+# - no need to keep main ultra-clean
+#
+# USE SQUASH WHEN:
+# - feature branch has many small messy commits
+# - team wants main branch very clean
+# - each PR should appear as one commit in main
+#
+# USE REBASE WHEN:
+# - team prefers linear history
+# - you want feature branch updated on top of latest main
+# - developers understand history rewriting safely
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 17: COMMON SCENARIOS
+# =====================================================================
+# SCENARIO A:
+# Reviewer requested changes after PR opened.
+# ACTION:
+# commit in same branch and push
+# RESULT:
+# same PR updates automatically
+#
+# SCENARIO B:
+# Feature branch has 10 tiny commits like:
+# "fix typo", "small fix", "oops"
+# ACTION:
+# use squash or squash-and-merge
+#
+# SCENARIO C:
+# main branch changed while PR is open
+# ACTION:
+# update feature branch with latest main
+# either by merge or by rebase
+#
+# SCENARIO D:
+# team wants full branch history
+# ACTION:
+# use merge commit
+#
+# SCENARIO E:
+# team wants clean one-commit-per-feature main history
+# ACTION:
+# use squash and merge
+#
+# SCENARIO F:
+# team wants linear history without merge commits
+# ACTION:
+# use rebase and merge
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 18: IMPORTANT WARNINGS
+# =====================================================================
+# WARNING 1:
+# Rebase rewrites history.
+# Commit IDs change.
+#
+# WARNING 2:
+# If branch is already pushed and shared, rebasing carelessly can confuse others.
+#
+# WARNING 3:
+# After rebase or local squash on a pushed branch, push may require:
+# git push --force-with-lease
+#
+# WARNING 4:
+# Do not use plain --force casually in team projects.
+# Prefer:
+# git push --force-with-lease
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 19: GOLDEN DIFFERENCES
+# =====================================================================
+# MERGE:
+# combines branch histories
+#
+# REBASE:
+# replays commits on a new base
+#
+# SQUASH:
+# combines multiple commits into one
+#
+# PULL REQUEST:
+# review workflow around integrating branch changes
+# =====================================================================
+
+
+
+# =====================================================================
+# SECTION 20: VERY IMPORTANT TEACHING SUMMARY
+# =====================================================================
+# PULL REQUEST WORKFLOW:
+# feature branch -> push -> PR -> review -> update -> merge
+#
+# REBASE:
+# used when you want your branch to sit on top of latest main
+#
+# SQUASH:
+# used when you want many small commits to become one clean commit
+#
+# GITHUB PR MERGE OPTIONS:
+# - Create a merge commit
+# - Squash and merge
+# - Rebase and merge
+# =====================================================================
