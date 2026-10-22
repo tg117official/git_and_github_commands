@@ -1,100 +1,231 @@
-# Git Session 2 — Undoing Changes and Recovering Files
+# Git Session 2 — Fix Mistakes and Recover Files
 
-**Tools:** Git Bash and Notepad  
-**Practice files:** `customers.txt` and `orders.txt` in the Git repository from Session 1
+**Use:** Git Bash and Notepad  
+**Practice files:** `customers.txt` and `orders.txt`  
+**Work locally:** No GitHub account or internet connection is needed.
 
-> **Before starting:** Use your existing repository from Session 1. Both practice files should already have at least one commit. Begin with no unfinished edits: `git status` shows whether files have changes waiting to be saved in Git. If you are still viewing an older commit from Session 1, `git checkout main` returns to the current version on `main` (provided that was your original branch). Do not discard unfinished work just to make the repository clean.
+In this lesson, you will fix mistakes in three places: files on your computer, changes selected for the next commit, and changes already saved in a commit.
 
-## 1. Where is the current version?
+## 1. Find out where the mistake is
 
-- Run `git status` to see whether files have changed and whether those changes are ready for the next commit.
-- Run `git log --oneline -3` to see the latest three saved versions (commits).
+```mermaid
+flowchart LR
+    A[Working tree<br/>Files in Notepad] -->|git add| B[Staging area<br/>Changes selected for a commit]
+    B -->|git commit| C[Commit history<br/>Saved versions]
+    B -->|git restore --staged| A
+    C -.->|git restore --source| A
+```
 
-The **working tree** contains the files you see in Notepad. The **staging area** contains the file changes selected for the next commit. A **commit** saves that selected version in Git's history. **HEAD** identifies the commit currently being viewed, usually through the current branch.
+| Term | Simple meaning |
+|---|---|
+| **Working tree** | The files you open and edit in Notepad. |
+| **Staging area** | The file changes you have selected for your **next** commit. |
+| **Unstage** | Remove a change from that selection. The edit **stays in the file** on your computer. |
+| **Commit** | A saved version in Git history. |
+| **HEAD** | Your current place in Git history, usually through the current branch. |
 
-## 2. Accidental edit: keep the last saved version
-
-**Situation:** You edited `customers.txt`, but the new information is incorrect. You haven't staged or committed the edit.
-
-1. Open `customers.txt` in Notepad, add `C999,Wrong Customer,Invalid`, and save the file.
-2. Run `git diff -- customers.txt` to see what has changed in the file since its staged version.
-3. Run `git restore -- customers.txt` to replace the working-tree file with the version in the staging area. Because this edit was not staged, the incorrect line is removed.
-4. Run `git diff -- customers.txt` again to confirm there are no remaining unstaged changes.
-
-**Remember:** `git restore -- customers.txt` discards unstaged edits in that file. Use it only when those edits are no longer needed.
-
-## 3. Accidental staging: remove a file from the next commit
-
-**Situation:** You changed `orders.txt` and selected it for the next commit, but you aren't ready to include those changes yet.
-
-1. Open `orders.txt` in Notepad, add `O999,C999,9999`, and save the file.
-2. Run `git add orders.txt` to place the current file changes in the staging area, ready for a future commit.
-3. Run `git diff --staged -- orders.txt` to see the changes currently selected for that commit.
-4. Run `git restore --staged -- orders.txt` to **unstage** the file: remove its changes from the next commit's selection **without deleting the edits from the file on disk**.
-5. Run `git diff -- orders.txt` to confirm the edits are still in your working-tree file.
-6. Run `git restore -- orders.txt` to discard those practice edits and return the file to its earlier content before the next scenario.
-
-**Remember:** *Unstage* means **take changes out of the staging area**, not delete them from Notepad or from the computer.
-
-## 4. Accidental deletion: bring a file back
-
-**Situation:** You deleted `orders.txt` from your computer, but the deletion has not been committed.
-
-1. Run `rm orders.txt` in Git Bash to delete the file from your working tree.
-2. Run `git status` to confirm Git notices the deletion of a tracked file.
-3. Run `git restore -- orders.txt` to recreate `orders.txt` using its staged version (normally the latest committed version).
-4. Run `git status` again to check that the deletion has been resolved.
-
-The file returns because its earlier contents were recorded by Git. This does not recover an untracked file that Git never saved.
-
-## 5. Accidental commit: undo the change but keep its history
-
-### A. Incorrect data was committed
-
-**Situation:** An incorrect customer record was not only edited but also committed.
-
-1. Open `customers.txt`, add `C999,Wrong Customer,Invalid`, and save it.
-2. Run `git add customers.txt` to include the incorrect edit in the next commit.
-3. Run `git commit -m "Add incorrect customer"` to save that mistaken version in history.
-4. Run `git revert --no-edit HEAD` to create **another commit** that reverses the changes made by the latest commit. The incorrect line is removed from the current file.
-5. Run `git log --oneline -3` to see both the incorrect commit and the new commit that undid it.
-6. Run `git show HEAD~1` to inspect the incorrect commit even though its changes have been reversed. `HEAD~1` means the commit immediately before the current one.
-
-### B. A deletion was committed
-
-**Situation:** `orders.txt` was deleted and the deletion was committed. You now need the file back.
-
-1. Run `rm orders.txt` to delete the tracked file.
-2. Run `git add -u` to stage changes and deletions to files Git already tracks, including the deletion of `orders.txt`.
-3. Run `git commit -m "Delete orders by mistake"` to save the accidental deletion in history.
-4. Run `git revert --no-edit HEAD` to create a new commit reversing that deletion; `orders.txt` returns.
-5. Run `git log --oneline -3` to confirm that both the deletion and its reversal remain in history.
-
-**Remember:** `git revert` **does not erase** the bad commit. It creates a new commit that cancels the bad commit's effect. An accidentally committed password or secret remains in earlier history even after a revert, so it must also be revoked or rotated.
-
-## 6. Recover one file from an older commit
-
-**Situation:** You made a valid change to `customers.txt` and committed it, but later decide the file should look exactly as it did in the previous commit. Other project files should remain untouched.
-
-1. Open `customers.txt`, add `C105,Kiran,Active`, and save it.
-2. Run `git add customers.txt` to select the updated file for committing.
-3. Run `git commit -m "Add customer Kiran"` to save the new file version.
-4. Run `git show HEAD~1:customers.txt` to **view** how the file looked in the commit immediately before the latest one, without changing anything on disk.
-5. Run `git restore --source=HEAD~1 -- customers.txt` to **copy that older file version into the working tree** without moving HEAD or changing other files.
-6. Run `git diff -- customers.txt` to examine the difference between the restored file and the version currently staged.
-7. Run `git add customers.txt` to select the restored file content for the next commit.
-8. Run `git commit -m "Restore previous customer list"` to save the restored version as a new commit.
-9. Run `git log --oneline -4` to verify that the commit adding Kiran still exists in history, even though the current file no longer contains that record.
-
-`HEAD~1` works here because the desired version is exactly one commit older. For any other saved version, use `git log --oneline` to locate its commit ID, then substitute that ID for `HEAD~1` in `git show` or `git restore --source`.
+A useful habit is to run `git status` before and after changing anything. It tells you whether Git sees new files, modified files, staged changes, or deletions.
 
 ---
 
-### What to remember
+## 2. Check your practice files
 
-- A file can be edited on disk without being staged or committed.
-- Removing changes from staging keeps the edits in the working tree.
-- Restoring the working tree can discard edits, so inspect the changes first.
-- Reverting a commit keeps the original commit in history and adds a commit that reverses it.
-- Viewing an older file with `git show` does not change the file; restoring it with `git restore --source` does.
-- You can recover a single file without taking the entire project back to an older version.
+Continue in the Git repository used in the previous lesson. Both files below must **already be committed**. They may have more lines than these examples.
+
+**`customers.txt`**
+
+```text
+C101,Anaya,Active
+C102,Rahul,Active
+```
+
+**`orders.txt`**
+
+```text
+O101,C101,1500
+O102,C102,2200
+```
+
+If either file is missing, create it in Notepad using the example content. Run `git add customers.txt orders.txt` to select both files, then `git commit -m "Save starting practice files"` to save the starting version. Run that commit only if Git reports changes to commit.
+
+| In Git Bash | What it tells you |
+|---|---|
+| `git status` | Shows whether you have unfinished file changes. Start the exercises with a clean working tree. |
+| `git log --oneline -3` | Shows the latest three saved versions, with short commit IDs. |
+
+If the previous lesson left you at an old commit with a **detached HEAD**, return to your normal branch first (for example, `git checkout main`, if that branch is named `main`). This returns you to the branch version without removing later commits. Do not switch while you have unfinished edits.
+
+---
+
+## 3. Mistake: You changed a file but do not want the edit
+
+Open `customers.txt` in Notepad, add this line, and save the file:
+
+```text
+C999,Wrong Customer,Invalid
+```
+
+| In Git Bash | What happens |
+|---|---|
+| `git diff -- customers.txt` | Shows your edits that have **not** been staged. Look for the new `C999` line. |
+| `git restore -- customers.txt` | Puts the file back to its staged version. Because you did not stage this edit, the unwanted line is removed. |
+| `git diff -- customers.txt` | Shows no difference if the unwanted edit is gone. |
+
+**Open the file again:** `C999` should be missing. Be careful: this restore command discards unstaged edits in the selected file.
+
+---
+
+## 4. Mistake: You selected the wrong file for the next commit
+
+Open `orders.txt`, add the following line, and save:
+
+```text
+O999,C999,9999
+```
+
+| In Git Bash | What happens |
+|---|---|
+| `git add orders.txt` | Copies the current file content into the staging area so it is ready for the next commit. |
+| `git diff --staged -- orders.txt` | Shows the change selected for the next commit. |
+| `git restore --staged -- orders.txt` | **Unstages** the file. The added line stays in Notepad, but it is no longer selected for the next commit. |
+| `git diff -- orders.txt` | Shows the added line as an unstaged change, proving it was not deleted. |
+| `git restore -- orders.txt` | Removes the practice edit from the file, so the next exercise starts clean. |
+
+```mermaid
+flowchart TD
+    A[Changed orders.txt] --> B[git add orders.txt]
+    B --> C[Edit is staged]
+    C --> D[git restore --staged -- orders.txt]
+    D --> E[Edit stays in file<br/>But is not staged]
+    E --> F[git restore -- orders.txt]
+    F --> G[Unstaged practice edit removed]
+```
+
+**Check:** After unstaging, you can still see `O999` in Notepad. After the final restore, `O999` is gone.
+
+---
+
+## 5. Mistake: You deleted an important file
+
+Delete `orders.txt`. You can delete it in File Explorer or use `rm orders.txt` in Git Bash; `rm` removes the file from your computer.
+
+| In Git Bash | What happens |
+|---|---|
+| `git status` | Shows `orders.txt` as deleted because Git remembers the file. |
+| `git restore -- orders.txt` | Brings the file back from the staged version, normally the latest commit. |
+| `git status` | Confirms the deletion is no longer waiting to be saved. |
+
+**Open the folder:** `orders.txt` should be back. Git can do this because the file was committed before. It cannot restore a never-committed, untracked file this way.
+
+---
+
+## 6. Mistake: You already committed incorrect data
+
+Open `customers.txt`, add `C999,Wrong Customer,Invalid`, and save.
+
+| In Git Bash | What happens |
+|---|---|
+| `git add customers.txt` | Selects the incorrect edit for the next commit. |
+| `git commit -m "Add incorrect customer"` | Saves a new commit containing the mistake. |
+| `git revert --no-edit HEAD` | Makes a **new commit** that reverses the most recent commit. `HEAD` means the currently checked-out commit. The wrong customer disappears from the latest file. |
+| `git log --oneline -3` | Shows both the mistaken commit and the new commit that undid it. |
+| `git show HEAD~1` | Shows the mistaken commit. `HEAD~1` means one commit before the current commit. |
+
+```mermaid
+flowchart LR
+    A[Stable commit] --> B[Bad commit<br/>Adds C999]
+    B --> C[Revert commit<br/>Removes C999]
+    style B fill:#fff1e6,stroke:#bd651c,color:#562b0c
+    style C fill:#e6f4ed,stroke:#20865a,color:#164d36
+```
+
+**Important:** `git revert` does not erase the bad commit. It adds another commit to cancel the bad change. You can still inspect the bad commit in the history.
+
+### What if the committed mistake was a file deletion?
+
+Delete `orders.txt` again, then follow this sequence:
+
+| In Git Bash | What happens |
+|---|---|
+| `rm orders.txt` | Deletes the file on your computer. Skip this command if you deleted it using File Explorer. |
+| `git add -u` | Stages edits and deletions to **already tracked** files, including the missing `orders.txt`. |
+| `git commit -m "Delete orders by mistake"` | Saves the accidental deletion as a commit. |
+| `git revert --no-edit HEAD` | Makes a new commit that reverses the deletion. The file returns. |
+| `git log --oneline -3` | Shows the deletion commit and the commit that recovered the file. |
+
+**Check:** `orders.txt` should be back, and its original lines should still be present.
+
+> **About accidentally committed secrets:** A revert does not remove a password or secret from older commits. If a real credential was exposed, revoke or rotate it. Do not use real credentials in practice files.
+
+---
+
+## 7. Recover only one file from an older commit
+
+Open `customers.txt`, add this valid line, and save:
+
+```text
+C105,Kiran,Active
+```
+
+| In Git Bash | What happens |
+|---|---|
+| `git add customers.txt` | Selects the new line for the next commit. |
+| `git commit -m "Add customer Kiran"` | Saves a version of the file containing Kiran. |
+| `git show HEAD~1:customers.txt` | **Displays** the previous committed file in Git Bash. It does not change the Notepad file. |
+| `git restore --source=HEAD~1 -- customers.txt` | **Copies** the older file into your working tree. `HEAD` does not move, and other files are not changed. |
+| `git diff -- customers.txt` | Shows how the restored file differs from the current staged version. |
+| `git add customers.txt` | Selects the restored file for a new commit. |
+| `git commit -m "Restore previous customer list"` | Saves the restored file as the latest version. |
+| `git log --oneline -4` | Shows that the commit adding Kiran still exists in history. |
+
+```mermaid
+flowchart TD
+    A[Current commit has Kiran] --> B{What do you want?}
+    B -->|Only look at an older file| C[git show HEAD~1:customers.txt]
+    B -->|Use an older file again| D[git restore --source=HEAD~1 -- customers.txt]
+    D --> E[git add customers.txt]
+    E --> F[git commit -m "Restore previous customer list"]
+    C --> G[Working file stays unchanged]
+    F --> H[New commit saves restored file]
+```
+
+To choose a different saved version, run `git log --oneline` to find its commit ID. Replace `HEAD~1` with that ID in the `git show` or `git restore --source` command.
+
+## 8. Revisit an earlier commit — even a mistaken one
+
+The accidental customer commit is still in history after the revert. You can **look at it** or **make its file content current again**.
+
+| In Git Bash | What happens |
+|---|---|
+| `git log --oneline` | Lists saved commits. Find the ID next to `Add incorrect customer`. |
+| `git show <commit-id>:customers.txt` | Shows the file from that mistaken commit, without changing your current files. |
+| `git restore --source=<commit-id> -- customers.txt` | Copies that commit's customer file back into the working tree. This also brings back the incorrect line, so use this only for this practice example. |
+| `git diff -- customers.txt` | Shows what changed compared with the staged copy. |
+| `git add customers.txt` | Selects the recovered file content for the next commit. |
+| `git commit -m "Revisit earlier customer version"` | Makes that file content the current committed version, while keeping the earlier history. |
+| `git revert --no-edit HEAD` | Reverses the practice commit again, removing the bad line while keeping both commits in history. |
+
+**Check:** The earlier mistaken commit is still visible with `git log --oneline`. Returning to a file's older content does not delete the commits made after it.
+
+A committed deletion also stays in history after you reverse it. Use `git log --oneline` to find the deletion commit and `git show <commit-id>` to view which file was removed. Because `git revert` adds a new commit instead of deleting old commits, there is no automatic 30-day limit on these commits in normal history. The 30/90-day expiration defaults you may hear about apply to **reflog entries**, a separate recovery tool.
+
+---
+
+## 9. Choose the safe recovery path
+
+```mermaid
+flowchart TD
+    A[Something went wrong] --> B{Was the change committed?}
+    B -->|No| C{Is it staged?}
+    C -->|No| D[git restore -- file<br/>Discard unwanted unstaged edits]
+    C -->|Yes| E[git restore --staged -- file<br/>Keep edits, remove from staging]
+    E --> F{Do you also want to remove edits?}
+    F -->|Yes| D
+    F -->|No| G[Keep the edits on disk]
+    B -->|Yes| H{What do you need?}
+    H -->|Undo a whole commit| I[git revert COMMIT<br/>Create an undo commit]
+    H -->|Recover one old file| J[git restore --source=COMMIT -- file<br/>Copy older file content]
+    H -->|View only| K[git show COMMIT:file<br/>Do not change files]
+```
+
+**Remember:** Before any restore, check `git status` and `git diff` so you know which edits you could lose. The exercises use committed practice files; work you never committed may not be recoverable with Git.
