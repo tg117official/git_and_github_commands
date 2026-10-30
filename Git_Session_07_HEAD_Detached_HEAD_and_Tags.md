@@ -407,23 +407,53 @@ This creates a branch at the tagged commit and attaches HEAD to it. You can swit
 
 Assume you start on a normal branch, with HEAD **attached**.
 
-| Command | HEAD after a successful operation | What changes? |
-|---|---|---|
-| `git commit` | Attached | Current branch advances to new commit |
-| `git reset --soft HEAD~1` | Attached | Current branch moves back; changes remain staged |
-| `git reset --mixed HEAD~1` | Attached | Current branch moves back; working changes remain |
-| `git reset --hard HEAD~1` | Attached | Current branch moves back; tracked files reset |
-| `git revert --no-edit HEAD` | Attached | Creates a commit that reverses an earlier commit |
-| `git merge feature` | Attached | Current branch advances by fast-forward or merge commit |
-| `git cherry-pick COMMIT` | Attached | Creates a commit with the selected changes |
-| `git restore FILE` | Attached | Changes file content, not the current branch |
-| `git stash` / `git stash pop` | Attached | Saves or reapplies working changes; no branch switch |
-| `git switch feature` | Attached to `feature` | Changes the active branch |
-| `git switch -c feature COMMIT` | Attached to `feature` | Creates a branch at the chosen commit |
-| `git checkout COMMIT` | **Detached** | Checks out a commit directly |
-| `git switch --detach TAG` | **Detached** | Checks out a tagged commit directly |
-| `git show COMMIT` | Unchanged | Only displays information |
-| `git tag -a ...` | Unchanged | Adds a name to a commit; no checkout |
+## HEAD Position and Behavior Across Git Commands
+
+**Assumption:** HEAD is initially attached to the `main` branch.
+
+| Git Command | HEAD Movement | HEAD State After Command | What Happens |
+|---|---|---|---|
+| `git add .` | No movement | Attached | Stages changes for the next commit. |
+| `git commit -m "message"` | Forward | Attached | Creates a new commit and advances the current branch. |
+| `git commit --amend` | Replaces current commit | Attached | Creates a replacement for the latest commit with a new commit ID. |
+| `git reset --soft HEAD~1` | Backward | Attached | Moves the current branch back one commit. Keeps changes staged. |
+| `git reset --mixed HEAD~1` | Backward | Attached | Moves the current branch back one commit. Keeps changes in the working tree but unstaged. |
+| `git reset --hard HEAD~1` | Backward | Attached | Moves the current branch back one commit. Resets staging and tracked files to that commit. |
+| `git revert HEAD` | Forward | Attached | Creates a new commit that reverses the changes made by the current commit. |
+| `git checkout <commit-hash>` | Switches to selected commit | Detached | HEAD points directly to the selected commit instead of a branch. |
+| `git switch --detach <commit-hash>` | Switches to selected commit | Detached | Explicitly checks out a commit without attaching HEAD to a branch. |
+| `git switch main` | Switches to main | Attached | HEAD refers to the main branch and its current commit. |
+| `git switch feature` | Switches to feature | Attached | HEAD refers to the feature branch and its current commit. |
+| `git switch -c feature main~2` | Switches to older commit | Attached | Creates a new branch at an older commit and attaches HEAD to it. |
+| `git merge feature` | Forward if merge advances history | Attached | Fast-forwards the current branch or creates a merge commit, depending on history. |
+| `git merge --no-ff feature` | Forward if merge is needed | Attached | Creates a merge commit instead of fast-forwarding. |
+| `git cherry-pick <commit-hash>` | Usually forward | Attached | Applies another commit's changes as a new commit on the current branch. |
+| `git restore customers.txt` | No movement | Attached | Restores the working-tree file from staging. |
+| `git restore --staged customers.txt` | No movement | Attached | Resets the staged file to its HEAD version without deleting working-tree edits. |
+| `git stash` | No movement | Attached | Temporarily saves tracked-file changes and cleans them from the working tree and staging area. |
+| `git stash apply` | No movement | Attached | Restores saved changes while keeping the stash entry. |
+| `git stash pop` | No movement | Attached | Restores saved changes and removes the stash entry if successful. |
+| `git tag v1.0` | No movement | Attached | Creates a tag pointing to the current commit. |
+| `git checkout v1.0` | Switches to tagged commit | Detached | Checks out the commit referenced by the tag directly. |
+| `git show HEAD~2` | No movement | Unchanged | Displays information about an earlier commit. |
+| `git log --oneline --graph --all` | No movement | Unchanged | Displays commit history across references. |
+| `git reflog` | No movement | Unchanged | Shows recorded movements of HEAD. |
+| `git rebase main` | Replays commits | Attached after success | Replays current branch commits onto main. HEAD may be temporarily detached during rebase. |
+
+### Important Rules
+
+1. Attached HEAD means HEAD refers to a branch, such as `main` or `feature`.
+2. Detached HEAD means HEAD points directly to a commit rather than a branch reference.
+3. Moving HEAD backward does not automatically detach it.
+4. Creating a new commit does not automatically attach a detached HEAD.
+5. Reset preserves the existing attached/detached state; it does not automatically change that state.
+6. Checkout of a commit hash or tag normally detaches HEAD, even if that commit is also the latest commit of a branch.
+7. Switching to a branch attaches HEAD to that branch.
+8. Commands that only inspect history or modify file contents do not normally move HEAD.
+9. An operation that fails or encounters conflicts may stop before its expected final HEAD movement.
+
+**Remember:** HEAD being attached or detached depends on WHAT it references,
+not whether it moves forward or backward.
 
 **Important exception:** If HEAD is **already detached**, commands such as `git commit` and `git reset --hard` normally leave it detached. A new commit or a reset can move the direct HEAD pointer, but does not attach it to a branch. To attach it again, switch to an existing branch or create a new branch.
 
