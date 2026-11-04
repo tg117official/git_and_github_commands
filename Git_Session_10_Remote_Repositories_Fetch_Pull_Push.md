@@ -147,6 +147,18 @@ git remote -v
 
 `git remote add origin` stores the GitHub URL under the short name `origin`. `git remote -v` displays the saved remote URL used for fetching and pushing. Do not type `YOUR-USERNAME` literally.
 
+# Check the existing remote URL
+`git remote -v`
+
+# Update the URL of the existing origin
+`git remote set-url origin https://github.com/YOUR_ACCOUNT_NAME/git-remote-practice-10.git`
+
+# Verify the updated URL
+`git remote -v`
+
+# Push commits to GitHub
+`git push -u origin main`
+
 ```bash
 git push -u origin main
 git status
